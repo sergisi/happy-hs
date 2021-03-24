@@ -18,6 +18,9 @@ $syncToken = \=
 tokens :-
 
 $white+ { skip }
+[A-Z] { token (\_, _, _, s) _ -> LRealReg $ head s)}
+[a-z] { token (\_, _, _, s) _ -> LIntReg $ head s)}
+\=  { tk LAssign }
 \*  { tk LMult }
 \/  { tk LDiv }
 \+  { tk LSum }
@@ -25,7 +28,7 @@ $white+ { skip }
 \(  { tk LLBrack }
 \)  { tk LRBrack }
 \-?[0-9]+  { token (\(_, _, _, s) len -> LInt . read $ take len s) }
-\=  { tk LSync }
+\n  { tk LSync }
 
 {
 
@@ -41,6 +44,8 @@ data LexerT = LMult
             | LInt Int
             | LSync
             | LEOF
+            | LRealReg Char
+            | LIntReg Char
             deriving (Show, Eq, Read, Ord)
 
 scanner str = fmap reverse . runAlex str $ loop []

@@ -19,7 +19,9 @@ import Lexer
    '('      { LLBrack }
    ')'      { LRBrack }
    int      { LInt $$ }
-   '='      { LSync }
+   ';'      { LSync }
+   rvar     { LRealVar $$ }
+   ivar     { LIntVar $$ }
 
 %left '+' '-'
 %left '*' '/'
@@ -27,8 +29,8 @@ import Lexer
 %%
 
 Line :: { [ Exp ] }
-Line : Line '=' Exp {$3 : $1}
-     | Line '=' { $1 }
+Line : Line ';' Exp {$3 : $1}
+     | Line ';' { $1 }
      | Exp      { [$1] }
      | {- empty -} { [] }
 
@@ -37,8 +39,10 @@ Exp : Exp '+' Exp { TSum $1 $3 }
     | Exp '-' Exp { TMinus $1 $3 }
     | Exp '*' Exp { TMult $1 $3 }
     | Exp '/' Exp { TDiv $1 $3 }
+    | Reg '=' Exp { TAssign $1 $3 }
     | int         { TVal $1 }
     | '(' Exp ')' { TBrack $2 }
+    | var         { TReg $1 }
 
 
 {
@@ -49,6 +53,7 @@ data Exp = TSum Exp Exp
          | TDiv Exp Exp
          | TVal Int
          | TBrack Exp
+         | TAssign Char
          deriving (Show, Eq, Ord, Read)
 
 eval :: Exp -> Int
