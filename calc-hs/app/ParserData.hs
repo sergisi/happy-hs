@@ -1,5 +1,3 @@
-{-# LANGUAGE GADTs #-}
-
 -- | Module where it contains the Parser data, as it will need GADTS
 module ParserData (Exp(..), eval)where
 
@@ -8,18 +6,20 @@ import qualified Data.Map.Strict as Map
 import Lens.Micro
 import Lexer
 
-data Exp a where
-  TSum :: (Num a) => Exp a -> Exp a -> Exp a
-  TMinus :: (Num a) => Exp a -> Exp a -> Exp a
-  TMult :: (Num a) => Exp a -> Exp a -> Exp a
-  TDiv :: Exp Int -> Exp Int -> Exp Int
-  TVal :: Int -> Exp Int
-  TBrack :: Exp a -> Exp a
-  TRealAssign :: Char -> Exp Double -> Exp Double
-  TIntAssign :: Char -> Exp Int -> Exp Int
-  TRealGet :: Char -> Exp Double
-  TIntGet :: Char -> Exp Int
--- Cannot derive from GADTs
+type Val = Either Double Int
+
+data Exp = TSum Exp Exp
+  | TMinus Exp Exp
+  | TMult Exp Exp
+  | TDiv Exp Exp
+  | TVal Int
+  | TRealVal Double
+  | TBrack Exp
+  | TRealAssign Char Exp
+  | TIntAssign Char Exp
+  | TRealGet Char
+  | TIntGet Char
+  deriving (Show, Read, Eq, Ord)
 
 {-- | Evaluates GADT mantaining the state
 -- This functions lets avaluate an Alex (Exp a) to an
@@ -30,57 +30,82 @@ data Exp a where
 --
 -- >>> runAlex "" $ const alexGetUserState =<< (eval $ return $ TIntAssign 'a' $ TSum (TVal 3) (TVal 4))
 -}
-eval :: Alex (Exp a) -> Alex a
-eval alex = do
-  exp <- alex
+eval :: Exp -> Alex Val
+eval exp =
   case exp of
     TSum ea eb -> do
-      a <- eval $ return ea
-      b <- eval $ return eb
-      return $ a + b
+      a <- eval ea
+      b <- eval eb
+      liftOperator (+) (+) a b
     TMinus ea eb -> do
-      a <- eval $ return ea
-      b <- eval $ return eb
-      return $ a - b
+      a <- eval ea
+      b <- eval eb
+      liftOperator (-) (-) a b
     TMult ea eb -> do
-      a <- eval $ return ea
-      b <- eval $ return eb
-      return $ a * b
+      a <- eval ea
+      b <- eval eb
+      liftOperator (*) (*) a b
     TDiv ea eb -> do
-      a <- eval $ return ea
-      b <- eval $ return eb
-      return $ a `div` b
-    TVal a -> return a
-    TBrack a -> eval $ return a
+      a <- eval ea
+      b <- eval eb
+      ifBothRights div a b
+    TVal a -> return $ Right a
+    TRealVal a -> return $ Left a
+    TBrack a -> eval  a
     TRealAssign c expDouble -> do
       s <- alexGetUserState
-      b <- eval $ return expDouble
-      alexSetUserState $ over reals (Map.insert c b) s
-      return b
+      b' <- eval expDouble
+      case b' of
+        Left b -> do
+                  alexSetUserState $ over reals (Map.insert c b) s
+                  return $ Left b
+        Right _ -> do
+                   (line, column) <- getLineAndColumn
+                   alexError $ "Trying to assign integer at double variable at " ++ show line ++ ':': show column
     TIntAssign c expInt -> do
       s <- alexGetUserState
-      b <- eval $ return expInt
-      alexSetUserState $ over integers (Map.insert c b) s
-      return b
+      b' <- eval expInt
+      case b' of
+        Right b -> do
+                  alexSetUserState $ over integers (Map.insert c b) s
+                  return $ Right b
+        Left _ -> do
+                   (line, column) <- getLineAndColumn
+                   alexError $ "Trying to assign double at integer variable at " ++ show line ++ ':': show column
     TRealGet c -> do
       s <- alexGetUserState
       if c `Map.member` (s ^. reals)
-        then do
+        then return . Left $ (s ^. reals) Map.! c
+        else do
           (line, column) <- getLineAndColumn
           alexError $ "Character "
                       ++ show c
-                      ++ "is not a part of the definitions until now: "
+                      ++ " is not a part of the real definitions  now: "
                       ++ show (s ^. reals)
                       ++ ", at" ++ show line ++ ':': show column
-        else return $ (s ^. reals) Map.! c
     TIntGet c -> do
       s <- alexGetUserState
       if c `Map.member` (s ^. integers)
-        then do
+        then return . Right $ (s ^. integers) Map.! c
+        else do
           (line, column) <- getLineAndColumn
           alexError $ "Character "
                       ++ show c
-                      ++ "is not a part of the definitions until now: "
+                      ++ " is not a part of the integers definitions now: "
                       ++ show (s ^. integers)
                       ++ ", at" ++ show line ++ ':': show column
-        else return $ (s ^. integers) Map.! c
+
+liftOperator :: (Int -> Int -> Int) -> (Double -> Double -> Double) -> Val -> Val -> Alex Val
+liftOperator _ f (Left x)  (Left y)  = return . Left $ f x y
+liftOperator f _ (Right x) (Right y) = return . Right $ f x y
+liftOperator _ _ _ _ = do
+  (line, column) <- getLineAndColumn
+  alexError $ "Cannot apply operator between doubles and integers. Please cast to either one of them! At "
+            ++ show line ++ ':': show column
+
+ifBothRights :: (Int -> Int -> Int) -> Val -> Val -> Alex Val
+ifBothRights f (Right x) (Right y) = return . Right $ f x y
+ifBothRights _ _ _ = do
+  (line, column) <- getLineAndColumn
+  alexError $ "Cannot apply operator between doubles and integers. Please cast to either one of them! At "
+            ++ show line ++ ':': show column
