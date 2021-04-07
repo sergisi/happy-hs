@@ -37,35 +37,33 @@ makeLenses ''State
 
 instance Show State where
   show st =
-    unlines
-      [ "Descripció del AF",
+    unlines $
+      [ "",
+        "Descripció del AF",
         -- "Estats numerats del " ++ show (st ^. initialState) ++ " al " ++ show (st ^. endState),
         "Estat inicial: " ++ show (st ^. initialState),
-        "Estat final: " ++ show (st ^. endState),
-        unlines . map show $ st ^. actions
+        "Estat final: " ++ show (st ^. endState)
       ]
+        ++ (map show $ st ^. actions)
 
-{-| States to evaluate the different actions.
-It starts at negative so there is no need to change the starting value
-of the action.
--}
+-- | States to evaluate the different actions.
+-- It starts at negative so there is no need to change the starting value
+-- of the action.
 state1 = State (-2) (-1) [Action (-2) (-1) $ Just 'a']
 
 state2 = State (-4) (-3) [Action (-4) (-3) $ Just 'b']
 
-{-| Alternative creation
-=== Example
->>> runAlex "" $ alternative state1 state2
-Right Descripció del AF
-Estats numerats del 0 al 1
-[Estat 0, Lambda] Go to -2
-[Estat 0, Lambda] Go to -4
-[Estat -1, Lambda] Go to 1
-[Estat -3, Lambda] Go to 1
-[Estat -2, Simbol a] Go to -1
-[Estat -4, Simbol b] Go to -3
-
--}
+-- | Alternative creation
+-- === Example
+-- >>> runAlex "" $ alternative state1 state2
+-- Right Descripció del AF
+-- Estats numerats del 0 al 1
+-- [Estat 0, Lambda] Go to -2
+-- [Estat 0, Lambda] Go to -4
+-- [Estat -1, Lambda] Go to 1
+-- [Estat -3, Lambda] Go to 1
+-- [Estat -2, Simbol a] Go to -1
+-- [Estat -4, Simbol b] Go to -3
 alternative :: State -> State -> Alex State
 alternative exp1 exp2 = do
   s <- alexGetUserState
@@ -90,80 +88,75 @@ alternative exp1 exp2 = do
           ^. actions
       )
 
-{-| Concat of two states
-
-=== Exemple
->>> concaten state1 state2
-Descripció del AF
-Estats numerats del -2 al -3
-Estat inicial: -2
-Estat final: -3
-[Estat -1, Lambda] Go to -4
-[Estat -2, Simbol a] Go to -1
-[Estat -4, Simbol b] Go to -3
--}
+-- | Concat of two states
+--
+-- === Exemple
+-- >>> concaten state1 state2
+-- Descripció del AF
+-- Estats numerats del -2 al -3
+-- Estat inicial: -2
+-- Estat final: -3
+-- [Estat -1, Lambda] Go to -4
+-- [Estat -2, Simbol a] Go to -1
+-- [Estat -4, Simbol b] Go to -3
 concaten :: State -> State -> State
-concaten exp1 exp2 = State (exp1 ^. initialState) (exp2 ^. endState)
-  (Action (exp1 ^. endState) (exp2 ^. initialState) Nothing :(exp1 ^. actions ++ exp2 ^. actions))
+concaten exp1 exp2 =
+  State
+    (exp1 ^. initialState)
+    (exp2 ^. endState)
+    (Action (exp1 ^. endState) (exp2 ^. initialState) Nothing : (exp1 ^. actions ++ exp2 ^. actions))
 
-{-| Exists of a State
-
-=== Exemple
->>> exist state1
-Descripció del AF
-Estats numerats del -2 al -1
-Estat inicial: -2
-Estat final: -1
-[Estat -2, Lambda] Go to -1
-[Estat -2, Simbol a] Go to -1
--}
+-- | Exists of a State
+--
+-- === Exemple
+-- >>> exist state1
+-- Descripció del AF
+-- Estats numerats del -2 al -1
+-- Estat inicial: -2
+-- Estat final: -1
+-- [Estat -2, Lambda] Go to -1
+-- [Estat -2, Simbol a] Go to -1
 exist :: State -> State
 exist exp = over actions (Action (exp ^. initialState) (exp ^. endState) Nothing :) exp
 
-{-| Kleen Star of a expression
-
-
-=== Exemple
->>> kleen state1
-Descripció del AF
-Estats numerats del -2 al -1
-Estat inicial: -2
-Estat final: -1
-[Estat -1, Lambda] Go to -2
-[Estat -2, Lambda] Go to -1
-[Estat -2, Simbol a] Go to -1
-
--}
+-- | Kleen Star of a expression
+--
+--
+-- === Exemple
+-- >>> kleen state1
+-- Descripció del AF
+-- Estats numerats del -2 al -1
+-- Estat inicial: -2
+-- Estat final: -1
+-- [Estat -1, Lambda] Go to -2
+-- [Estat -2, Lambda] Go to -1
+-- [Estat -2, Simbol a] Go to -1
 kleen :: State -> State
 kleen = plus . exist
 
-{-| Regex+
-
-=== Exemple
-
->>> plus state1
-Descripció del AF
-Estats numerats del -2 al -1
-Estat inicial: -2
-Estat final: -1
-[Estat -1, Lambda] Go to -2
-[Estat -2, Simbol a] Go to -1
--}
+-- | Regex+
+--
+-- === Exemple
+--
+-- >>> plus state1
+-- Descripció del AF
+-- Estats numerats del -2 al -1
+-- Estat inicial: -2
+-- Estat final: -1
+-- [Estat -1, Lambda] Go to -2
+-- [Estat -2, Simbol a] Go to -1
 plus :: State -> State
 plus exp = over actions (Action (exp ^. endState) (exp ^. initialState) Nothing :) exp
 
-{-| Creates a State from a Maybe Char.
-
-=== Exemples
->>> runAlex "" . stateFromChar $ Just 'a'
-Right Descripció del AF
-Estats numerats del 0 al 1
-Estat inicial: 0
-Estat final: 1
-[Estat 0, Simbol a] Go to 1
-
-
--}
+-- | Creates a State from a Maybe Char.
+--
+-- === Exemples
+-- >>> runAlex "" . stateFromChar $ Just 'a'
+-- Right Descripció del AF
+-- Estats numerats del 0 al 1
+-- Estat inicial: 0
+-- Estat final: 1
+-- [Estat 0, Simbol a] Go to 1
 stateFromChar :: Maybe Char -> Alex State
 stateFromChar c = do
   s <- alexGetUserState
