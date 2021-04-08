@@ -19,6 +19,7 @@ data Exp = TSum Exp Exp
   | TIntAssign Char Exp
   | TRealGet Char
   | TIntGet Char
+  | TMod Exp Exp
   deriving (Show, Read, Eq, Ord)
 
 {-- | Evaluates GADT mantaining the state
@@ -94,7 +95,15 @@ eval exp =
                       ++ " is not a part of the integers definitions now: "
                       ++ show (s ^. integers)
                       ++ ", at" ++ show line ++ ':': show column
+    TMod exp exp' -> do
+      a <- eval exp
+      b <- eval exp'
+      ifBothRights mod a b
 
+-- | Lifts two operators at a value level
+-- ===Exemple
+-- >>> runAlex "" $ liftOperator (+) (+) (Left 3) (Left 3)
+-- Right (Left 6)
 liftOperator :: (Int -> Int -> Int) -> (Double -> Double -> Double) -> Val -> Val -> Alex Val
 liftOperator _ f (Left x)  (Left y)  = return . Left $ f x y
 liftOperator f _ (Right x) (Right y) = return . Right $ f x y
@@ -103,9 +112,24 @@ liftOperator _ _ _ _ = do
   alexError $ "Cannot apply operator between doubles and integers. Please cast to either one of them! At "
             ++ show line ++ ':': show column
 
+-- | Lifts one operator if both are integers
+-- ===Exemple
+-- >>> runAlex "" $ ifBothRights (+) (Right 3) (Right 3)
+-- Right (Right 6)
 ifBothRights :: (Int -> Int -> Int) -> Val -> Val -> Alex Val
 ifBothRights f (Right x) (Right y) = return . Right $ f x y
 ifBothRights _ _ _ = do
+  (line, column) <- getLineAndColumn
+  alexError $ "Cannot apply operator between doubles and integers. Please cast to either one of them! At "
+            ++ show line ++ ':': show column
+
+-- | Lifts one operator if both are doubles
+-- ===Exemple
+-- >>> runAlex "" $ ifBothLeft (+) (Right 3) (Right 3)
+-- Right (Left 6)
+ifBothLeft :: (Double -> Double -> Double) -> Val -> Val -> Alex Val
+ifBothLeft f (Left x) (Left y) = return . Left $ f x y
+ifBothLeft _ _ _ = do
   (line, column) <- getLineAndColumn
   alexError $ "Cannot apply operator between doubles and integers. Please cast to either one of them! At "
             ++ show line ++ ':': show column
