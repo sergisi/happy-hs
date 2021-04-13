@@ -30,7 +30,7 @@ $white+    { skip }
 \)         { tk LRBrack }
 \-?[0-9]+  { token (\(_, _, _, s) len -> LInt . read $ take len s) }
 \;         { tk LSync }
-
+"mod"      { tk LMod }
 {
 
 tk :: LexerT -> AlexAction LexerT
@@ -38,6 +38,7 @@ tk = token . const . const
 
 data LexerT = LMult
             | LDiv
+            | LMod
             | LSum
             | LMinus
             | LLBrack
