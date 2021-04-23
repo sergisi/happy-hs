@@ -55,4 +55,6 @@ Exp : Exp 'i' Exp    { TConj $1 $3 }
 happyError :: LexerT -> Alex a
 happyError tok = alexError $ "Happy error on token: " ++ show tok
 
+runSimplify s =  runAlex s $ fmap (fmap (simplify . expandNegations) .  reverse) eval
+
 }
