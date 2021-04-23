@@ -69,7 +69,7 @@ simplify' :: WasOp -> Exp -> Exp
 simplify' w exp = case exp of
   TConj e e' -> TConj (simplify' WasConj e) $ simplify' WasConj e'
   TDisj e e' -> TDisj (simplify' WasDisj e) $ simplify' WasDisj e'
-  TBrack e -> case e of
+  TBrack e -> case removeRedundant e of
     TVal x -> TVal x
     exp ->
       let exp' = simplify' WasBrack exp; w' = getWasOp exp'
