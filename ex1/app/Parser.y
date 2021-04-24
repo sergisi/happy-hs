@@ -25,6 +25,8 @@ import ParserData
    ivar     { LIntReg $$ }
    '='      { LAssign }
    '%'      { LMod }
+   ">>"     { LRightShift }
+   "<<"     { LLeftShift }
 
 %left '+' '-'
 %left '*' '/' '%'
@@ -48,6 +50,10 @@ Exp : Exp '+' Exp { TSum $1 $3 }
     | Exp '*' Exp { TMult $1 $3 }
     | Exp '/' Exp { TDiv $1 $3 }
     | Exp '%' Exp { TMod $1 $3 }
+    | Exp ">>" Exp { TRightShift $1 $3 }
+    | Exp "<<" Exp { TLeftShift $1 $3 }
+    | '-' Exp     { TNegate $2}
+    | '+' Exp     { TPositive $2}
     | int         { TVal $1 }
     | '(' Exp ')' { TBrack $2 }
     | rvar        { TRealGet $1 }

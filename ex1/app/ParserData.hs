@@ -5,6 +5,7 @@ import AlexUserState
 import qualified Data.Map.Strict as Map
 import Lens.Micro
 import Lexer
+import Data.Bits
 
 type Val = Either Double Int
 
@@ -12,6 +13,8 @@ data Exp = TSum Exp Exp
   | TMinus Exp Exp
   | TMult Exp Exp
   | TDiv Exp Exp
+  | TLeftShift Exp Exp
+  | TRightShift Exp Exp
   | TVal Int
   | TRealVal Double
   | TBrack Exp
@@ -20,6 +23,8 @@ data Exp = TSum Exp Exp
   | TRealGet Char
   | TIntGet Char
   | TMod Exp Exp
+  | TNegate Exp
+  | TPositive Exp
   deriving (Show, Read, Eq, Ord)
 
 {-- | Evaluates GADT mantaining the state
@@ -99,6 +104,21 @@ eval exp =
       a <- eval exp
       b <- eval exp'
       ifBothRights mod a b
+    TNegate exp -> do
+      a <- eval exp
+      return $ fmap negate a
+    TPositive exp -> do
+      a <- eval exp
+      return a
+    TRightShift exp exp' -> do
+      a <- eval exp
+      b <- eval exp'
+      ifBothRights  (shiftR) a b
+    TLeftShift exp exp' -> do
+      a <- eval exp
+      b <- eval exp'
+      ifBothRights (shiftL) a b
+
 
 -- | Lifts two operators at a value level
 -- ===Exemple

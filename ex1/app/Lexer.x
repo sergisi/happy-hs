@@ -28,9 +28,11 @@ $white+    { skip }
 \-         { tk LMinus }
 \(         { tk LLBrack }
 \)         { tk LRBrack }
-\-?[0-9]+  { token (\(_, _, _, s) len -> LInt . read $ take len s) }
+[0-9]+  { token (\(_, _, _, s) len -> LInt . read $ take len s) }
 \;         { tk LSync }
 "mod"      { tk LMod }
+">>"   { tk LRightShift }
+"<<"   { tk LLeftShift }
 {
 
 tk :: LexerT -> AlexAction LexerT
@@ -49,6 +51,8 @@ data LexerT = LMult
             | LRealReg Char
             | LIntReg Char
             | LAssign
+            | LRightShift
+            | LLeftShift
             deriving (Show, Eq, Read, Ord)
 
 scanner str = fmap reverse . runAlex str $ loop []
