@@ -1,11 +1,15 @@
 -- | Module where it contains the Parser data, as it will need GADTS
-module ParserData (Exp(..), eval)where
+module ParserData
+  ( Exp(..)
+  , eval
+  )
+where
 
-import AlexUserState
-import qualified Data.Map.Strict as Map
-import Lens.Micro
-import Lexer
-import Data.Bits
+import           AlexUserState
+import qualified Data.Map.Strict               as Map
+import           Lens.Micro
+import           Lexer
+import           Data.Bits
 
 type Val = Either Double Int
 
@@ -37,100 +41,121 @@ data Exp = TSum Exp Exp
 -- >>> runAlex "" $ const alexGetUserState =<< (eval $ return $ TIntAssign 'a' $ TSum (TVal 3) (TVal 4))
 -}
 eval :: Exp -> Alex Val
-eval exp =
-  case exp of
-    TSum ea eb -> do
-      a <- eval ea
-      b <- eval eb
-      liftOperator (+) (+) a b
-    TMinus ea eb -> do
-      a <- eval ea
-      b <- eval eb
-      liftOperator (-) (-) a b
-    TMult ea eb -> do
-      a <- eval ea
-      b <- eval eb
-      liftOperator (*) (*) a b
-    TDiv ea eb -> do
-      a <- eval ea
-      b <- eval eb
-      ifBothRights div a b
-    TVal a -> return $ Right a
-    TRealVal a -> return $ Left a
-    TBrack a -> eval  a
-    TRealAssign c expDouble -> do
-      s <- alexGetUserState
-      b' <- eval expDouble
-      case b' of
-        Left b -> do
-                  alexSetUserState $ over reals (Map.insert c b) s
-                  return $ Left b
-        Right _ -> do
-                   (line, column) <- getLineAndColumn
-                   alexError $ "Trying to assign integer at double variable at " ++ show line ++ ':': show column
-    TIntAssign c expInt -> do
-      s <- alexGetUserState
-      b' <- eval expInt
-      case b' of
-        Right b -> do
-                  alexSetUserState $ over integers (Map.insert c b) s
-                  return $ Right b
-        Left _ -> do
-                   (line, column) <- getLineAndColumn
-                   alexError $ "Trying to assign double at integer variable at " ++ show line ++ ':': show column
-    TRealGet c -> do
-      s <- alexGetUserState
-      if c `Map.member` (s ^. reals)
-        then return . Left $ (s ^. reals) Map.! c
-        else do
-          (line, column) <- getLineAndColumn
-          alexError $ "Character "
-                      ++ show c
-                      ++ " is not a part of the real definitions  now: "
-                      ++ show (s ^. reals)
-                      ++ ", at" ++ show line ++ ':': show column
-    TIntGet c -> do
-      s <- alexGetUserState
-      if c `Map.member` (s ^. integers)
-        then return . Right $ (s ^. integers) Map.! c
-        else do
-          (line, column) <- getLineAndColumn
-          alexError $ "Character "
-                      ++ show c
-                      ++ " is not a part of the integers definitions now: "
-                      ++ show (s ^. integers)
-                      ++ ", at" ++ show line ++ ':': show column
-    TMod exp exp' -> do
-      a <- eval exp
-      b <- eval exp'
-      ifBothRights mod a b
-    TNegate exp -> do
-      a <- eval exp
-      return $ fmap negate a
-    TPositive exp -> do
-      a <- eval exp
-      return a
-    TRightShift exp exp' -> do
-      a <- eval exp
-      b <- eval exp'
-      ifBothRights  (shiftR) a b
-    TLeftShift exp exp' -> do
-      a <- eval exp
-      b <- eval exp'
-      ifBothRights (shiftL) a b
+eval outer = case outer of
+  TSum ea eb -> do
+    a <- eval ea
+    b <- eval eb
+    liftOperator (+) (+) a b
+  TMinus ea eb -> do
+    a <- eval ea
+    b <- eval eb
+    liftOperator (-) (-) a b
+  TMult ea eb -> do
+    a <- eval ea
+    b <- eval eb
+    liftOperator (*) (*) a b
+  TDiv ea eb -> do
+    a <- eval ea
+    b <- eval eb
+    ifBothRights div a b
+  TVal     a              -> return $ Right a
+  TRealVal a              -> return $ Left a
+  TBrack   a              -> eval a
+  TRealAssign c expDouble -> do
+    s  <- alexGetUserState
+    b' <- eval expDouble
+    case b' of
+      Left b -> do
+        alexSetUserState $ over reals (Map.insert c b) s
+        return $ Left b
+      Right _ -> do
+        (line, column) <- getLineAndColumn
+        alexError
+          $  "Trying to assign integer at double variable at "
+          ++ show line
+          ++ ':'
+          :  show column
+  TIntAssign c expInt -> do
+    s  <- alexGetUserState
+    b' <- eval expInt
+    case b' of
+      Right b -> do
+        alexSetUserState $ over integers (Map.insert c b) s
+        return $ Right b
+      Left _ -> do
+        (line, column) <- getLineAndColumn
+        alexError
+          $  "Trying to assign double at integer variable at "
+          ++ show line
+          ++ ':'
+          :  show column
+  TRealGet c -> do
+    s <- alexGetUserState
+    if c `Map.member` (s ^. reals)
+      then return . Left $ (s ^. reals) Map.! c
+      else do
+        (line, column) <- getLineAndColumn
+        alexError
+          $  "Character "
+          ++ show c
+          ++ " is not a part of the real definitions  now: "
+          ++ show (s ^. reals)
+          ++ ", at"
+          ++ show line
+          ++ ':'
+          :  show column
+  TIntGet c -> do
+    s <- alexGetUserState
+    if c `Map.member` (s ^. integers)
+      then return . Right $ (s ^. integers) Map.! c
+      else do
+        (line, column) <- getLineAndColumn
+        alexError
+          $  "Character "
+          ++ show c
+          ++ " is not a part of the integers definitions now: "
+          ++ show (s ^. integers)
+          ++ ", at"
+          ++ show line
+          ++ ':'
+          :  show column
+  TMod exp exp' -> do
+    a <- eval exp
+    b <- eval exp'
+    ifBothRights mod a b
+  TNegate exp -> do
+    a <- eval exp
+    return $ fmap negate a
+  TPositive exp -> eval exp
+  TRightShift exp exp' -> do
+    a <- eval exp
+    b <- eval exp'
+    ifBothRights shiftR a b
+  TLeftShift exp exp' -> do
+    a <- eval exp
+    b <- eval exp'
+    ifBothRights shiftL a b
 
 
 -- | Lifts two operators at a value level
 -- ===Exemple
 -- >>> runAlex "" $ liftOperator (+) (+) (Left 3) (Left 3)
 -- Right (Left 6)
-liftOperator :: (Int -> Int -> Int) -> (Double -> Double -> Double) -> Val -> Val -> Alex Val
-liftOperator _ f (Left x)  (Left y)  = return . Left $ f x y
+liftOperator
+  :: (Int -> Int -> Int)
+  -> (Double -> Double -> Double)
+  -> Val
+  -> Val
+  -> Alex Val
+liftOperator _ f (Left  x) (Left  y) = return . Left $ f x y
 liftOperator f _ (Right x) (Right y) = return . Right $ f x y
-liftOperator _ _ _ _ = do
+liftOperator _ _ _         _         = do
   (line, column) <- getLineAndColumn
-  alexError $ "Cannot apply operator between doubles and integers. Please cast to either one of them! At "
-            ++ show line ++ ':': show column
+  alexError
+    $ "Cannot apply operator between doubles and integers. Please cast to either one of them! At "
+    ++ show line
+    ++ ':'
+    :  show column
 
 -- | Lifts one operator if both are integers
 -- ===Exemple
@@ -138,10 +163,13 @@ liftOperator _ _ _ _ = do
 -- Right (Right 6)
 ifBothRights :: (Int -> Int -> Int) -> Val -> Val -> Alex Val
 ifBothRights f (Right x) (Right y) = return . Right $ f x y
-ifBothRights _ _ _ = do
+ifBothRights _ _         _         = do
   (line, column) <- getLineAndColumn
-  alexError $ "Cannot apply operator between doubles and integers. Please cast to either one of them! At "
-            ++ show line ++ ':': show column
+  alexError
+    $ "Cannot apply operator between doubles and integers. Please cast to either one of them! At "
+    ++ show line
+    ++ ':'
+    :  show column
 
 -- | Lifts one operator if both are doubles
 -- ===Exemple
@@ -149,7 +177,10 @@ ifBothRights _ _ _ = do
 -- Right (Left 6)
 ifBothLeft :: (Double -> Double -> Double) -> Val -> Val -> Alex Val
 ifBothLeft f (Left x) (Left y) = return . Left $ f x y
-ifBothLeft _ _ _ = do
+ifBothLeft _ _        _        = do
   (line, column) <- getLineAndColumn
-  alexError $ "Cannot apply operator between doubles and integers. Please cast to either one of them! At "
-            ++ show line ++ ':': show column
+  alexError
+    $ "Cannot apply operator between doubles and integers. Please cast to either one of them! At "
+    ++ show line
+    ++ ':'
+    :  show column
