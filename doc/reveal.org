@@ -1,4 +1,4 @@
-#+TITLE: Reveal
+#+TITLE: Haskell
 #+author: Sergi Simón Balcells
 #+OPTIONS: toc:nil
 #+begin_comment
@@ -152,7 +152,7 @@ reduce f b (x:xs) = f x $ reduce f b xs
 Donada una cadena de caràcters mirem si aquesta és palíndrom
 #+begin_src haskell
 palindrom :: String -> String -> Boolean
-palindrom xs = zipWith (==) xs $ reverse xs
+palindrom xs = and . zipWith (==) xs $ reverse xs
 #+end_src
 ** Multiplicació d'elements adjacents
 Tenim una llista d'enters. Volem veure la parella contigua que més gran és el resultat de la seva multiplicació
