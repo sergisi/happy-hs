@@ -151,7 +151,7 @@ reduce f b (x:xs) = f x $ reduce f b xs
 ** Palindroms
 Donada una cadena de caràcters mirem si aquesta és palíndrom
 #+begin_src haskell
-palindrom :: String -> String -> Boolean
+palindrom :: String -> Bool
 palindrom xs = and . zipWith (==) xs $ reverse xs
 #+end_src
 ** Multiplicació d'elements adjacents
