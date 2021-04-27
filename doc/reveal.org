@@ -1,0 +1,179 @@
+#+TITLE: Haskell
+#+author: Sergi Simón Balcells
+#+OPTIONS: toc:nil
+#+begin_comment
+Quim
+Introducció
+Tipus - Monades
+Problemes
+
+Sergi
+Funcions
+HoF
+^ Boss final
+#+end_comment
+* Introducció
+#+begin_comment
++ 1990
++ S'ha influenciat:
+Clean,[4] FP,[4] Gofer,[4] Hope and Hope+,[4] Id,[4] ISWIM,[4] KRC,[4] Lisp,[4] Miranda,[4] ML and Standard ML,[4] Orwell, SASL,[4] Scheme,[4] SISAL[4]
++ Ha influenciat
+Agda,[5] Bluespec,[6] C++11/Concepts,[7] C#/LINQ,[8][9][10][11] CAL,[citation needed] Cayenne,[8] Clean,[8] Clojure,[12] CoffeeScript,[13] Curry,[8] Elm, Epigram,[citation needed] Escher,[14] F#,[15] Frege,[16] Hack,[17] Idris,[18] Isabelle,[8] Java/Generics,[8] LiveScript,[19] Mercury,[8] Ωmega, PureScript,[20] Python,[8][21] Raku,[22] Rust,[23] Scala,[8][24] Swift,[25] Timber,[26] Visual Basic 9.0[8][9]
+#+end_comment
+** Llenguatges funcionals
+#+begin_comment
+- purely functional programming you don't tell the computer what to do as such but rather you tell it what stuff is
+- imperative languages you get things done by giving the computer a sequence of tasks and then it executes them
+
+- Functional programming is style of programming in which the basic method of computation is the application of functions to arguments;
+- A functional language is one that supports and encourages the functional style
+#+end_comment
+#+begin_src haskell
+sum [1 .. 100]
+#+end_src
+#+begin_src python
+res = 0
+for i in range(1, 100):
+    res += i
+#+end_src
+** Avaluació mandrosa
+#+begin_comment
+Haskell is lazy. That means that unless specifically told otherwise, Haskell won't execute functions and calculate things until it's really forced to show you a result.
+#+end_comment
+** Fortament tipat
+- Si una funció realitza qualsevol operació amb efectes secundaris, el seu tipatge ho ha de dir.
+- S'estalvia errors fent que tot sigui explícit.
+
+* Exemples de funcions
+#+begin_src haskell
+factorial :: Integer -> Integer
+factorial 0 = 1
+factorial n = n * factorial (n - 1)
+#+end_src
+#+begin_comment
++ Esmentar la falta de parentesis en cridar la funció.
+  - Aqui els parentesis només serveixen per canviar l'ordre
+    del parseig de les funcions, com en les matemàtiques.
+  - Dir que les funcions s'apliquen primer, la resta d'operadors
+    s'apliquen de forma infixa
+
+
+#+end_comment
+** Observem els tipus de les funcions
+#+begin_src haskell
+factorial :: Integer -> Integer
+main :: IO ()
+mergesort :: Ord a => [a] -> [a]
+merge :: Ord a => [a] -> [a] -> [a]
+#+end_src
+** Observem com podem crear operadors
+#+begin_src haskell
+(<->) :: Integer -> Integer -> Integer
+a <-> b = 2 * a - b
+#+end_src
+#+begin_comment
+#+end_comment
+** Currificació de funcions
+#+begin_src haskell
+take :: Int -> [a] -> [a]
+take10 = take 10
+#+end_src
+#+reveal: split
+#+begin_src haskell
+take10 :: [a] -> [a]
+#+end_src
+** Composició de funcions
+#+begin_src haskell
+take :: Int -> [a] -> [a]
+reverse :: [a] -> [a]
+getLast :: Int -> [a] -> [a]
+getLast n = take n . reverse
+#+end_src
+* Exemples de tipus
+** Type alias
+#+begin_src haskell
+type Hz = Double
+type Duration = Double
+makeSound :: Hz -> Duration -> IO ()
+#+end_src
+** Data
+#+begin_src haskell
+data Tree a
+  = Node a (Tree a) (Tree a)
+  | Leaf deriving (Show, Eq, Read, Ord)
+
+getMaybeLeft :: Tree a -> Maybe (Tree a)
+getMaybeLeft (Node a left right) = Just left
+getMaybeLeft _ = Nothing
+#+end_src
+** Typeclasses
+#+begin_src haskell
+class Eq a where
+  (==) :: a -> a -> Bool
+  (==) = not . (/=)
+
+  (/=) :: a -> a -> Bool
+  (/=) = not . (==)
+  {-# MINIMAL (==) | (/=) #-}
+
+data TrafficLight = Green | Red | Yellow
+    deriving (Show, Read)
+
+instance Eq TrafficLight where
+  Red == Red = True
+  Green == Green = True
+  Yellow == Yellow = True
+  _ == _ = False
+#+end_src
+#+reveal: split
+#+begin_src haskell
+type Functor :: (* -> *) -> Constraint
+class Functor f where
+  fmap :: (a -> b) -> f a -> f b
+  (<$) :: a -> f b -> f a
+  {-# MINIMAL fmap #-}
+    -- Defined in ‘GHC.Base’
+#+end_src
+* High Order Functions
+** Map
+#+begin_src haskell
+map :: (a -> b) -> [a] -> [b]
+map f [] = []
+map f (x:xs) = f x : map f xs
+#+end_src
+** Reduce
+#+begin_src haskell
+reduce :: (a -> acc -> acc) -> acc -> [a] -> acc
+reduce f b [] = b
+reduce f b (x:xs) = f x $ reduce f b xs
+#+end_src
+* Problemes algorítmics
+** Palindroms
+Donada una cadena de caràcters mirem si aquesta és palíndrom
+#+begin_src haskell
+palindrom :: String -> Bool
+palindrom xs = and . zipWith (==) xs $ reverse xs
+#+end_src
+** Multiplicació d'elements adjacents
+Tenim una llista d'enters. Volem veure la parella contigua que més gran és el resultat de la seva multiplicació
+#+begin_src haskell
+problem :: [Int] -> Int
+problem xs = maximum . zipWith (*) xs $ tail xs
+#+end_src
+* Si dona temps
+** Com es pot marcar amb tipus un IO o un Random?
+** Que anomenem per funcions
++ Matemàticament, un mapeig de valors d'un conjunt A a un B
++ Informàticament, algo que accepta paràmetres i potser:
+  - Llança un error
+  - Fa una operació d'IO
+  - Utiltza una generació aleatòria
+  - Manipula un estat global
+
+** Com podem definir-ho matemàticament
++ Si llança un error, pot retornar un valor o bé el valor d'excepció (unió de conjunts)
++ Si fa una operació IO, realment estem passant una "recepta" pas a pas per a crear possiblement el valor
++ Si genera aleatoriament, podem pensar que retorna tot el conjunt de valors possibles en que va la funció (parts del conjunt)
++ Si manipula l'estat global, agafa un paràmetre estat i retorna la tupla del resultat i de l'estat.
+** Fletxes de Kleinsli i les Mònades
+* Gràcies per la vostra atenció

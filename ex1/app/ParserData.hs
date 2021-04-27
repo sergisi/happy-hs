@@ -1,11 +1,15 @@
 -- | Module where it contains the Parser data, as it will need GADTS
-module ParserData (Exp(..), eval)where
+module ParserData
+  ( Exp(..)
+  , eval
+  )
+where
 
-import AlexUserState
-import qualified Data.Map.Strict as Map
-import Lens.Micro
-import Lexer
-import Data.Bits
+import           AlexUserState
+import qualified Data.Map.Strict               as Map
+import           Lens.Micro
+import           Lexer
+import           Data.Bits
 
 type Val = Either Double Int
 
@@ -111,8 +115,7 @@ eval exp =
     TNegate exp -> do
       a <- eval exp
       return $ fmap negate a
-    TPositive exp -> do
-      eval exp
+    TPositive exp -> eval exp
     TRightShift exp exp' -> do
       a <- eval exp
       b <- eval exp'
@@ -141,13 +144,21 @@ eval exp =
 -- ===Exemple
 -- >>> runAlex "" $ liftOperator (+) (+) (Left 3) (Left 3)
 -- Right (Left 6)
-liftOperator :: (Int -> Int -> Int) -> (Double -> Double -> Double) -> Val -> Val -> Alex Val
-liftOperator _ f (Left x)  (Left y)  = return . Left $ f x y
+liftOperator
+  :: (Int -> Int -> Int)
+  -> (Double -> Double -> Double)
+  -> Val
+  -> Val
+  -> Alex Val
+liftOperator _ f (Left  x) (Left  y) = return . Left $ f x y
 liftOperator f _ (Right x) (Right y) = return . Right $ f x y
-liftOperator _ _ _ _ = do
+liftOperator _ _ _         _         = do
   (line, column) <- getLineAndColumn
-  alexError $ "Cannot apply operator between doubles and integers. Please cast to either one of them! At "
-            ++ show line ++ ':': show column
+  alexError
+    $ "Cannot apply operator between doubles and integers. Please cast to either one of them! At "
+    ++ show line
+    ++ ':'
+    :  show column
 
 -- | Lifts one operator if both are integers
 -- ===Exemple
@@ -155,10 +166,13 @@ liftOperator _ _ _ _ = do
 -- Right (Right 6)
 ifBothRights :: (Int -> Int -> Int) -> Val -> Val -> Alex Val
 ifBothRights f (Right x) (Right y) = return . Right $ f x y
-ifBothRights _ _ _ = do
+ifBothRights _ _         _         = do
   (line, column) <- getLineAndColumn
-  alexError $ "Cannot apply operator between doubles and integers. Please cast to either one of them! At "
-            ++ show line ++ ':': show column
+  alexError
+    $ "Cannot apply operator between doubles and integers. Please cast to either one of them! At "
+    ++ show line
+    ++ ':'
+    :  show column
 
 -- | Lifts one operator if both are integers
 -- ===Exemple
@@ -177,7 +191,10 @@ ifIsRight _ _ = do
 -- Right (Left 6)
 ifBothLeft :: (Double -> Double -> Double) -> Val -> Val -> Alex Val
 ifBothLeft f (Left x) (Left y) = return . Left $ f x y
-ifBothLeft _ _ _ = do
+ifBothLeft _ _        _        = do
   (line, column) <- getLineAndColumn
-  alexError $ "Cannot apply operator between doubles and integers. Please cast to either one of them! At "
-            ++ show line ++ ':': show column
+  alexError
+    $ "Cannot apply operator between doubles and integers. Please cast to either one of them! At "
+    ++ show line
+    ++ ':'
+    :  show column
