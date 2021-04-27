@@ -33,6 +33,10 @@ $white+    { skip }
 "mod"      { tk LMod }
 ">>"   { tk LRightShift }
 "<<"   { tk LLeftShift }
+\~      { tk LCompAUn }
+\&     { tk LAnd }
+\|     { tk LOr }
+\^     { tk LXor }
 {
 
 tk :: LexerT -> AlexAction LexerT
@@ -53,6 +57,10 @@ data LexerT = LMult
             | LAssign
             | LRightShift
             | LLeftShift
+            | LCompAUn
+            | LAnd
+            | LOr
+            | LXor
             deriving (Show, Eq, Read, Ord)
 
 scanner str = fmap reverse . runAlex str $ loop []

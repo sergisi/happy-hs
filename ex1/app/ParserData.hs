@@ -25,6 +25,10 @@ data Exp = TSum Exp Exp
   | TMod Exp Exp
   | TNegate Exp
   | TPositive Exp
+  | TCompAUn Exp
+  | TAnd Exp Exp
+  | TOr Exp Exp
+  | TXor Exp Exp 
   deriving (Show, Read, Eq, Ord)
 
 {-- | Evaluates GADT mantaining the state
@@ -108,17 +112,30 @@ eval exp =
       a <- eval exp
       return $ fmap negate a
     TPositive exp -> do
-      a <- eval exp
-      return a
+      eval exp
     TRightShift exp exp' -> do
       a <- eval exp
       b <- eval exp'
-      ifBothRights  (shiftR) a b
+      ifBothRights  shiftR a b
     TLeftShift exp exp' -> do
       a <- eval exp
       b <- eval exp'
-      ifBothRights (shiftL) a b
-
+      ifBothRights shiftL a b
+    TCompAUn exp -> do
+      a <- eval exp
+      ifIsRight complement a
+    TAnd exp exp' -> do
+      a <- eval exp
+      b <- eval exp'
+      ifBothRights (.&.) a b
+    TOr exp exp' -> do
+      a <- eval exp
+      b <- eval exp'
+      ifBothRights (.|.) a b
+    TXor exp exp' -> do
+      a <- eval exp
+      b <- eval exp'
+      ifBothRights xor a b
 
 -- | Lifts two operators at a value level
 -- ===Exemple
@@ -139,6 +156,17 @@ liftOperator _ _ _ _ = do
 ifBothRights :: (Int -> Int -> Int) -> Val -> Val -> Alex Val
 ifBothRights f (Right x) (Right y) = return . Right $ f x y
 ifBothRights _ _ _ = do
+  (line, column) <- getLineAndColumn
+  alexError $ "Cannot apply operator between doubles and integers. Please cast to either one of them! At "
+            ++ show line ++ ':': show column
+
+-- | Lifts one operator if both are integers
+-- ===Exemple
+-- >>> runAlex "" $ ifBothRights (+) (Right 3) (Right 3)
+-- Right (Right 6)
+ifIsRight :: (Int -> Int) -> Val -> Alex Val
+ifIsRight f (Right x) = return . Right $ f x
+ifIsRight _ _ = do
   (line, column) <- getLineAndColumn
   alexError $ "Cannot apply operator between doubles and integers. Please cast to either one of them! At "
             ++ show line ++ ':': show column

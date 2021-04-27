@@ -27,6 +27,10 @@ import ParserData
    '%'      { LMod }
    ">>"     { LRightShift }
    "<<"     { LLeftShift }
+   '~'      { LCompAUn }
+   '&'     { LAnd }
+   '|'     { LOr }
+   '^'     { LXor }
 
 %left '+' '-'
 %left '*' '/' '%'
@@ -52,6 +56,10 @@ Exp : Exp '+' Exp { TSum $1 $3 }
     | Exp '%' Exp { TMod $1 $3 }
     | Exp ">>" Exp { TRightShift $1 $3 }
     | Exp "<<" Exp { TLeftShift $1 $3 }
+    | Exp '&' Exp { TAnd $1 $3 }
+    | Exp '|' Exp { TOr $1 $3 }
+    | Exp '^' Exp { TXor $1 $3 }
+    | '~' Exp     { TCompAUn $2 }
     | '-' Exp     { TNegate $2}
     | '+' Exp     { TPositive $2}
     | int         { TVal $1 }
