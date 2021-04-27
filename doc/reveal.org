@@ -143,7 +143,7 @@ map f (x:xs) = f x : map f xs
 #+end_src
 ** Reduce
 #+begin_src haskell
-reduce :: (a -> acc -> acc) -> acc -> [a] -> b
+reduce :: (a -> acc -> acc) -> acc -> [a] -> acc
 reduce f b [] = b
 reduce f b (x:xs) = f x $ reduce f b xs
 #+end_src
