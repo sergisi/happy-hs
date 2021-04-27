@@ -33,6 +33,8 @@ data Exp = TSum Exp Exp
   | TAnd Exp Exp
   | TOr Exp Exp
   | TXor Exp Exp 
+  | TIntToReal Exp
+  | TRealToInt Exp
   deriving (Show, Read, Eq, Ord)
 
 {-- | Evaluates GADT mantaining the state
@@ -139,6 +141,33 @@ eval exp =
       a <- eval exp
       b <- eval exp'
       ifBothRights xor a b
+    TIntToReal exp -> do
+      a <- eval exp
+      intToreal a
+    TRealToInt exp -> do
+      a <- eval exp
+      realToInt a
+
+
+realToInt :: Val -> Alex Val
+realToInt (Left a) = return . Right $ floor a  
+realToInt _ = do
+  (line, column) <- getLineAndColumn
+  alexError
+    $ "Cannot apply cast from int to int, the expression is not a real "
+    ++ show line
+    ++ ':'
+    :  show column
+
+intToreal :: Val -> Alex Val
+intToreal (Right a) = return . Left $ fromIntegral a
+intToreal _ = do
+  (line, column) <- getLineAndColumn
+  alexError
+    $ "Cannot apply cast from real to real, the expression is not an int "
+    ++ show line
+    ++ ':'
+    :  show column
 
 -- | Lifts two operators at a value level
 -- ===Exemple
@@ -174,15 +203,26 @@ ifBothRights _ _         _         = do
     ++ ':'
     :  show column
 
--- | Lifts one operator if both are integers
+-- | Lifts one operator if the argument is an integer
 -- ===Exemple
--- >>> runAlex "" $ ifBothRights (+) (Right 3) (Right 3)
--- Right (Right 6)
+-- >>> runAlex "" $ ifBothRights (+) (Right 3)
+-- Right (Right 3)
 ifIsRight :: (Int -> Int) -> Val -> Alex Val
 ifIsRight f (Right x) = return . Right $ f x
 ifIsRight _ _ = do
   (line, column) <- getLineAndColumn
-  alexError $ "Cannot apply operator between doubles and integers. Please cast to either one of them! At "
+  alexError $ "Cannot apply operator to any other type that isn't Int "
+            ++ show line ++ ':': show column
+
+-- | Lifts one operator if the argument is a Double
+-- ===Exemple
+-- >>> runAlex "" $ ifBothRights (+) (Right 3.5)
+-- Right (Right 3.5)
+ifIsLeft :: (Double -> Double) -> Val -> Alex Val
+ifIsLeft f (Left x) = return . Left $ f x
+ifIsLeft _ _ = do
+  (line, column) <- getLineAndColumn
+  alexError $ "Cannot apply operator to any other type that isn't Double"
             ++ show line ++ ':': show column
 
 -- | Lifts one operator if both are doubles
