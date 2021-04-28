@@ -17,6 +17,7 @@ data Exp = TSum Exp Exp
   | TMinus Exp Exp
   | TMult Exp Exp
   | TDiv Exp Exp
+  | TDivInt Exp Exp
   | TLeftShift Exp Exp
   | TRightShift Exp Exp
   | TVal Int
@@ -64,7 +65,7 @@ eval outer =
     TDiv ea eb -> do
       a <- eval ea
       b <- eval eb
-      ifBothRights div a b
+      ifBothLeft (/) a b
     TVal a -> return $ Right a
     TRealVal a -> return $ Left a
     TBrack a -> eval  a
@@ -147,7 +148,10 @@ eval outer =
     TRealToInt exp -> do
       a <- eval exp
       realToInt a
-
+    TDivInt exp exp' -> do
+      a <- eval exp
+      b <- eval exp'
+      ifBothRights div a b 
 
 realToInt :: Val -> Alex Val
 realToInt (Left a) = return . Right $ floor a  
