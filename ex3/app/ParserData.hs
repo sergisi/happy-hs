@@ -1,5 +1,5 @@
 -- | Module where it contains the Parser data, as it will need GADTS
-module ParserData (Exp (..), simplify) where
+module ParserData (Exp (..), simplify, eval) where
 
 import AlexUserState
 import Lexer
@@ -25,6 +25,16 @@ instance Show Exp where
     TMod exp exp' -> show exp ++ " mod " ++ show exp'
     TBrack exp -> '(' : show exp ++ ")"
     TVal x -> show x
+
+eval :: Exp -> Int
+eval e = case e of
+  TSum ex ex' -> eval ex + eval ex'
+  TMinus ex ex' -> eval ex - eval ex'
+  TDiv ex ex' -> let x = eval ex' in if x /= 0 then eval ex `div` x else eval ex
+  TMod ex ex' -> let x = eval ex' in if x /= 0 then eval ex `mod` x else eval ex
+  TMult ex ex' -> eval ex * eval ex'
+  TBrack ex -> eval ex
+  TVal x -> x
 
 data WasExp
   = WasSum
