@@ -51,4 +51,5 @@ Exp : Exp  '+' Exp { TSum $1 $3 }
 happyError :: LexerT -> Alex a
 happyError tok = alexError $ "Happy error on token: " ++ show tok
 
+runExpression s = runAlex s $ fmap (fmap show . reverse) calc
 }
