@@ -8,7 +8,7 @@ Carpeta app:
 * **Lexer.x:** És el fitxer on definim l'analitzador lèxic.
 * **Parser.y:** És el fitxer on definim l'analitzador sintàctic
 * **ParserData.hs:** És el fitxer amb les definicions de tipus i funcions auxiliars que utilitzarem en la part de l'anàlisi sintàctic. Ho hem decidit fer així perque si no el parser contenia massa lògica i feia més dificil la seva lectura i compensió.
-* **AlexUserStat:** Es defineix un estat dins la monada Alex que és el que mantindrà la taula de tipus.
+* **AlexUserState:** Es defineix un estat dins la monada Alex que és el que mantindrà la taula de tipus.
 
 Carpeta test amb els testos de cada un dels exercicis que es poden executar des de l'script test.sh
 
