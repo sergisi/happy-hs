@@ -1,5 +1,5 @@
 #+TITLE: Haskell
-#+author: Sergi Simón Balcells
+#+author: Joaquim Picó, Sergi Simón
 #+OPTIONS: toc:nil
 #+begin_comment
 Quim
@@ -133,6 +133,16 @@ class Functor f where
   (<$) :: a -> f b -> f a
   {-# MINIMAL fmap #-}
     -- Defined in ‘GHC.Base’
+#+end_src
+#+reveal: split
+#+begin_src haskell
+instance Functor [] where
+  fmap = map
+
+-- Optional en altres llenguatges.
+instance Functor Maybe where
+  fmap f Nothing = Nothing
+  fmap f (Just x) = Just $ f x
 #+end_src
 * High Order Functions
 ** Map
