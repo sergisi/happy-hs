@@ -23,6 +23,7 @@ unitTests = testGroup
   , testSimplify "(2 * 3) div (4 div 2)" "2 * 3 div (4 div 2)"
   , testSimplify "(2 * 3) mod (4 mod 2)" "2 * 3 mod (4 mod 2)"
   , testSimplify "2 * (3 + 2)"           "2 * (3 + 2)"
+  , testSimplify "((((2+(2*3)) * 3) mod (4 mod 2)*3))" "(2+2*3) * 3 mod (4 mod 2) * 3"
   ]
 
 uglyFunction exp = case withoutSimplify (show exp) of
