@@ -47,8 +47,8 @@ data Exp = TSum Exp Exp
 -- >>> runAlex "" $ const alexGetUserState =<< (eval $ return $ TIntAssign 'a' $ TSum (TVal 3) (TVal 4))
 -}
 eval :: Exp -> Alex Val
-eval exp =
-  case exp of
+eval outer =
+  case outer of
     TSum ea eb -> do
       a <- eval ea
       b <- eval eb
