@@ -20,6 +20,7 @@ import ParserData
    '('      { LLBrack }
    ')'      { LRBrack }
    int      { LInt $$ }
+   double   { LDouble $$ }
    ';'      { LSync }
    rvar     { LRealReg $$ }
    ivar     { LIntReg $$ }
@@ -27,10 +28,16 @@ import ParserData
    '%'      { LMod }
    ">>"     { LRightShift }
    "<<"     { LLeftShift }
+   '~'      { LCompAUn }
+   '&'     { LAnd }
+   '|'     { LOr }
+   '^'     { LXor }
+   "cast"    { LRealToInt }
+   "real"    { LIntToReal }
 
-%left '+' '-'
-%left '*' '/' '%'
-
+%left '+' '-' '|' '^'
+%left '*' '/' '%' '&' "<<" ">>"
+%left "cast" "real" '~'
 %%
 
 Line :: { [ Exp ] }
@@ -52,9 +59,16 @@ Exp : Exp '+' Exp { TSum $1 $3 }
     | Exp '%' Exp { TMod $1 $3 }
     | Exp ">>" Exp { TRightShift $1 $3 }
     | Exp "<<" Exp { TLeftShift $1 $3 }
+    | Exp '&' Exp { TAnd $1 $3 }
+    | Exp '|' Exp { TOr $1 $3 }
+    | Exp '^' Exp { TXor $1 $3 }
+    | "cast" Exp   { TRealToInt $2 }
+    | "real" Exp  { TIntToReal $2 }
+    | '~' Exp     { TCompAUn $2 }
     | '-' Exp     { TNegate $2}
     | '+' Exp     { TPositive $2}
     | int         { TVal $1 }
+    | double      { TRealVal $1 }
     | '(' Exp ')' { TBrack $2 }
     | rvar        { TRealGet $1 }
     | ivar        { TIntGet $1 }
