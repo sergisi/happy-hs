@@ -54,4 +54,5 @@ Exp : Exp '+'     { plus $1 }
 happyError :: LexerT -> Alex a
 happyError tok = alexError $ "Happy error on token: " ++ show tok
 
+runExpression s = fmap reverse $ runAlex s stateMachine
 }

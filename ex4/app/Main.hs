@@ -8,4 +8,7 @@ main :: IO ()
 main =
   do
     s <- getContents
-    print . fmap reverse $ runAlex s stateMachine
+    let x = reverse <$> runAlex s stateMachine
+    case x of
+      Left y -> print y
+      Right x -> putStrLn . unlines $ map repr x
