@@ -7,15 +7,11 @@ import           Test.Tasty.HUnit
 import           Parser
 import           ParserData
 
-import           Control.Monad                  ( when
-                                                , liftM
-                                                , liftM2
-                                                )
 
 testSimplify s exp = testCase s (exp @=? runExpression s)
 
 allTests = testGroup
-  "Suffix notation tests"
+  "Regex tests"
   [ testSimplify "a . b" $ Right
     [ State 0
             3
