@@ -26,6 +26,7 @@ import ParserData
    ivar     { LIntReg $$ }
    '='      { LAssign }
    '%'      { LMod }
+   "div"    { LDivInt }
    ">>"     { LRightShift }
    "<<"     { LLeftShift }
    '~'      { LCompAUn }
@@ -36,7 +37,7 @@ import ParserData
    "real"    { LIntToReal }
 
 %left '+' '-' '|' '^'
-%left '*' '/' '%' '&' "<<" ">>"
+%left '*' '/' '%' '&' "<<" ">>" "div"
 %left "cast" "real" '~'
 %%
 
@@ -57,6 +58,7 @@ Exp : Exp '+' Exp { TSum $1 $3 }
     | Exp '*' Exp { TMult $1 $3 }
     | Exp '/' Exp { TDiv $1 $3 }
     | Exp '%' Exp { TMod $1 $3 }
+    | Exp "div" Exp { TDivInt $1 $3}
     | Exp ">>" Exp { TRightShift $1 $3 }
     | Exp "<<" Exp { TLeftShift $1 $3 }
     | Exp '&' Exp { TAnd $1 $3 }

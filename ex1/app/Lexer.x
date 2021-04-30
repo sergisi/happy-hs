@@ -31,6 +31,7 @@ $white+    { skip }
 [0-9]+  { token (\(_, _, _, s) len -> LInt . read $ take len s) }
 [0-9]+\.[0-9]+  { token (\(_, _, _, s) len -> LDouble . read $ take len s) }
 \;         { tk LSync }
+"div"      { tk LDivInt }
 "mod"      { tk LMod }
 ">>"   { tk LRightShift }
 "<<"   { tk LLeftShift }
@@ -48,6 +49,7 @@ tk = token . const . const
 data LexerT = LMult
             | LDiv
             | LMod
+            | LDivInt
             | LSum
             | LMinus
             | LLBrack
