@@ -32,6 +32,10 @@ Per tal d'executar els exercicis, moures a la carpeta  de l'exercici i executar:
 make all
 cabal v2-run
 ```
+Per tal d'executar els tests:
+```
+cabal v2-test
+```
 
 # Link Repo
 https://github.com/sergisi/alex-hs
