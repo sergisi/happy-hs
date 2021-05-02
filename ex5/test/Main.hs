@@ -19,7 +19,10 @@ simplificationTests = testGroup
 
 implicationTests = testGroup
   "Implication tests"
-  [testSimplify "A -> B" "!A o B", testSimplify "A <-> B" "(!A o B) i (!B o A)", testSimplify "(A i B) -> C" "!A o !B o C"]
+  [ testSimplify "A -> B"       "!A o B"
+  , testSimplify "A <-> B"      "(!A o B) i (!B o A)"
+  , testSimplify "(A i B) -> C" "!A o !B o C"
+  ]
 
 
 tests = testGroup "All tests" [simplificationTests, implicationTests]
