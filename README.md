@@ -1,5 +1,7 @@
 # Exercici 1. Avaluació d’expressions aritmètiques.
 
+S'han realitzat tots els exercicis de la pràctica, incluint-hi l'opcional.
+
 ## Estructura general dels exercicis
 
 Tots els exercicis compten amb la mateixa estructura.
@@ -10,7 +12,7 @@ Carpeta app:
 * **ParserData.hs:** És el fitxer amb les definicions de tipus i funcions auxiliars que utilitzarem en la part de l'anàlisi sintàctic. Ho hem decidit fer així perque si no el parser contenia massa lògica i feia més dificil la seva lectura i compensió.
 * **AlexUserState:** Es defineix un estat dins la monada Alex que és el que mantindrà la taula de tipus.
 
-Carpeta test amb els testos de cada un dels exercicis que es poden executar des de l'script test.sh
+Carpeta test amb els testos de cada un dels exercicis, s'han realitzat amb la llibreria Tasty.
 
 ## Requeriments Tècnics:
 
@@ -30,7 +32,7 @@ Carpeta test amb els testos de cada un dels exercicis que es poden executar des 
 Per tal d'executar els exercicis, moures a la carpeta  de l'exercici i executar:
 ```
 make all
-cabal v2-run
+cabal v2-run calc-hs.cabal
 ```
 Per tal d'executar els tests:
 ```
